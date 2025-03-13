@@ -1,4 +1,5 @@
 #include "IO_handler.h"
+#include <cmath>
 
 #define PI 3.1415927
 // constructors
@@ -15,11 +16,14 @@ IO_handler::IO_handler(float Ts) : counter(PA_8, PA_9),
     imu.configuration();
     /* *** AUFGABEN *** :
     1.1, 1.2, 1.3    */
-    ax2ax = LinearCharacteristics(1,0);
-    ay2ay = LinearCharacteristics(1,0);
+    ax2ax = LinearCharacteristics( -16100, 16700, -9.81, 9.81);
+    ay2ay = LinearCharacteristics( -16700, 16100, -9.81, 9.81);
     gz2gz = LinearCharacteristics(-32767,32768,-1000*PI/180,1000*PI/180);
     i2u = LinearCharacteristics(1,0);
-    /*  Aufgabe 3.1 Parametrieren  der Filter */ 
+    /*  Aufgabe 3.1 Parametrieren  der Filter */
+    fil_ax = IIR_filter( 1, Ts, 1);
+    fil_ay = IIR_filter( 1, Ts, 1);
+    fil_gz = IIR_filter( 1, Ts, 1);
 }
 // Deconstructor
 IO_handler::~IO_handler() {} 
@@ -29,9 +33,11 @@ void IO_handler::read_sensors_calc_speed(void)
     phi_fw = uw(counter);
     Vphi_fw = 0; //
     //-------------- read imu ------------
-    accx = imu.readAcc_raw(1);
-    accy = -imu.readAcc_raw(0);
-    gyrz = imu.readGyro_raw(2);
+    accx = ax2ax(imu.readAcc_raw(1));
+    accy = ay2ay(-imu.readAcc_raw(0));
+    gyrz = gz2gz(imu.readGyro_raw(2));
+    //------------- calculate phy_bd ----------
+    phi_bd = -PI/4 + atan2( fil_ax(accx), fil_ay(accy)) + fil_gz(gyrz);
 }
 
 void IO_handler::enable_escon(void)

@@ -12,6 +12,7 @@ operator: (float)   // calls "eval"
 class IIR_filter
 {
 public:
+    IIR_filter(){}                  //default constructor for IIR_filter
     IIR_filter(float,float);
     IIR_filter(float,float,float);
     virtual ~IIR_filter();
@@ -22,6 +23,6 @@ public:
 private:
     float *B;
     float *A;
-    float a0,b0;
+    float a0, b0, yk;
     uint8_t nb,na;
 };
